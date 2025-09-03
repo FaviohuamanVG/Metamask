@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo MetaMask + ethers.js</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+</head>
+<body>
+  <div class="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+    <div class="bg-white p-8 rounded shadow-md w-full max-w-sm flex flex-col items-center">
+      <button id="connect" class="mb-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Conectar MetaMask</button>
+      <button id="logout" class="mb-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition hidden">Cerrar sesión</button>
+      <div id="status" class="text-gray-700 text-center"></div>
+    </div>
+  </div>
+  <script>
+    const connectButton = document.getElementById('connect');
+    const logoutButton = document.getElementById('logout');
+    const statusDiv = document.getElementById('status');
+    let currentAccount = null;
+
+    function updateUI(account) {
+      if (account) {
+        statusDiv.innerText = 'Conectado: ' + account;
+        connectButton.classList.add('hidden');
+        logoutButton.classList.remove('hidden');
+      } else {
+        statusDiv.innerText = '';
+        connectButton.classList.remove('hidden');
+        logoutButton.classList.add('hidden');
+      }
+    }
+
+    connectButton.onclick = async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const provider = new ethers.providers.Web3Provider(window.ethereum);
+          const signer = provider.getSigner();
+          const address = await signer.getAddress();
+          currentAccount = address;
+          updateUI(address);
+        } catch (err) {
+          statusDiv.innerText = 'Error al conectar: ' + err.message;
+        }
+      } else {
+        statusDiv.innerText = 'MetaMask no está instalado.';
+      }
+    };
+
+    logoutButton.onclick = () => {
+      currentAccount = null;
+      updateUI(null);
+    };
+
+    // Si ya está conectado, mostrar la cuenta
+    window.addEventListener('DOMContentLoaded', async () => {
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const accounts = await provider.listAccounts();
+        if (accounts.length > 0) {
+          currentAccount = accounts[0];
+          updateUI(currentAccount);
+        }
+      }
+    });
+  </script>
+</body>
+</html>
